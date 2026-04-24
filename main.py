@@ -20,7 +20,7 @@ def health():
     return "OK"
 
 # ------------------ Конфигурация бота ------------------
-TOKEN = os.environ.get("TELEGRAM_TOKEN", "8663820500:AAHI1jg_yqmyDc32qH1b7RZBjK5r2EDI6bA")  # ← замените или передайте через переменную
+TOKEN = os.environ.get("TELEGRAM_TOKEN", "YOUR_BOT_TOKEN")  # ← замените или передайте через переменную
 HISTORY_FILE = "roulette_history.json"
 STATS_FILE = "strategy_stats.json"
 
