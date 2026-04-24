@@ -1,14 +1,16 @@
-import json
 import os
+import json
 import random
 import threading
+import time
 from collections import Counter
 
+import requests
 from flask import Flask
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-# ------------------ Flask-заглушка (обязательна для Render) ------------------
+# ------------------ Flask-приложение (обязательно для Render) ------------------
 web_app = Flask(__name__)
 
 @web_app.route('/')
@@ -20,7 +22,7 @@ def health():
     return "OK"
 
 # ------------------ Конфигурация бота ------------------
-TOKEN = os.environ.get("TELEGRAM_TOKEN", "YOUR_BOT_TOKEN")  # ← замените или передайте через переменную
+TOKEN = os.environ["TELEGRAM_TOKEN"]  # Берётся из переменной окружения Render
 HISTORY_FILE = "roulette_history.json"
 STATS_FILE = "strategy_stats.json"
 
@@ -240,12 +242,32 @@ def run_bot():
     print("Бот запущен в облаке...")
     app.run_polling()
 
+# ------------------ Keep-alive: пингуем сами себя, чтобы Render не засыпал ------------------
+def keep_alive():
+    # Получаем URL этого же сервиса (автоматически предоставляется Render)
+    service_url = os.environ.get("RENDER_EXTERNAL_URL", "")
+    if not service_url:
+        # Если переменная не задана, используем localhost (для тестов на ПК)
+        service_url = "http://localhost:5000"
+    while True:
+        time.sleep(600)  # каждые 10 минут
+        try:
+            requests.get(service_url + "/health", timeout=10)
+            print("Keep-alive ping sent")
+        except Exception as e:
+            print(f"Keep-alive failed: {e}")
+
 if __name__ == '__main__':
-    # Бот в отдельном потоке
+    # Запускаем бота в отдельном потоке
     bot_thread = threading.Thread(target=run_bot)
     bot_thread.daemon = True
     bot_thread.start()
 
-    # Flask-сервер для Render
+    # Запускаем keep-alive поток
+    keep_thread = threading.Thread(target=keep_alive)
+    keep_thread.daemon = True
+    keep_thread.start()
+
+    # Запускаем Flask-сервер
     port = int(os.environ.get("PORT", 5000))
     web_app.run(host="0.0.0.0", port=port)
