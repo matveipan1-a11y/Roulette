@@ -240,7 +240,7 @@ def run_bot():
     app.add_handler(CommandHandler("mode", force_mode))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_numbers))
     print("Бот запущен в облаке...")
-    app.run_polling()
+    app.run_polling(drop_pending_updates=True)
 
 # ------------------ Keep-alive: пингуем сами себя, чтобы Render не засыпал ------------------
 def keep_alive():
